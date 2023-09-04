@@ -14,7 +14,8 @@ from ivy.functional.frontends.paddle.func_wrapper import (
 def fft(x, n=None, axis=-1.0, norm="backward", name=None):
     ret = ivy.fft(ivy.astype(x, "complex128"), axis, norm=norm, n=n)
     return ivy.astype(ret, x.dtype)
-    
+
+
 @with_supported_dtypes(
     {
         "2.5.1 and below": (
@@ -139,7 +140,8 @@ def irfftn(x, n=None, axes=None, norm="backward", name=None):
         axes = list(range(ndim))
     else:
         axes = list(axes)
-        
+
+    
     pos_freq_terms = ivy.take_along_axis(x, range(n[axes[0]] // 2 + 1), axis=axes[0])
     neg_freq_terms = ivy.conj(pos_freq_terms[1:-1][::-1])
     combined_freq_terms = ivy.concat((pos_freq_terms, neg_freq_terms), axis=axes[0])
