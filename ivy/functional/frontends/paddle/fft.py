@@ -122,3 +122,31 @@ def irfft(x, n=None, axis=-1.0, norm="backward", name=None):
     if ivy.isreal(x):
         time_domain = ivy.real(time_domain)
     return time_domain
+
+
+@with_supported_dtypes(
+    {"2.5.1 and below": ("complex64", "complex128")},
+    "paddle",
+)
+@to_ivy_arrays_and_back
+def irfftn(x, n=None, axes=None, norm="backward", name=None):
+    shape = x.shape
+    ndim = len(shape)
+    if n is None:
+        n = [2 * (dim - 1) for dim in shape]
+    else:
+        n = list(n)
+    if axes is None:
+        axes = list(range(ndim))
+    else:
+        axes = list(axes)
+    
+    pos_freq_terms = ivy.take_along_axis(x, range(n[axes[0]] // 2 + 1), axis=axes[0])
+    neg_freq_terms = ivy.conj(pos_freq_terms[1:-1][::-1])
+    combined_freq_terms = ivy.concat((pos_freq_terms, neg_freq_terms), axis=axes[0])
+    time_domain_complex = ivy.ifft(combined_freq_terms, axes=axes, norm=norm)
+    if ivy.isreal(x):
+        time_domain = ivy.real(time_domain_complex)
+    else:
+        time_domain = time_domain_complex
+    return time_domain
