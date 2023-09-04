@@ -14,8 +14,7 @@ from ivy.functional.frontends.paddle.func_wrapper import (
 def fft(x, n=None, axis=-1.0, norm="backward", name=None):
     ret = ivy.fft(ivy.astype(x, "complex128"), axis, norm=norm, n=n)
     return ivy.astype(ret, x.dtype)
-
-
+    
 @with_supported_dtypes(
     {
         "2.5.1 and below": (
