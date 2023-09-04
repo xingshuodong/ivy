@@ -140,7 +140,7 @@ def irfftn(x, n=None, axes=None, norm="backward", name=None):
         axes = list(range(ndim))
     else:
         axes = list(axes)
-    
+
     pos_freq_terms = ivy.take_along_axis(x, range(n[axes[0]] // 2 + 1), axis=axes[0])
     neg_freq_terms = ivy.conj(pos_freq_terms[1:-1][::-1])
     combined_freq_terms = ivy.concat((pos_freq_terms, neg_freq_terms), axis=axes[0])
