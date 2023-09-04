@@ -220,3 +220,45 @@ def test_paddle_irfft(
         valid_axis=True,
         force_int_axis=True,
     )
+
+
+@handle_frontend_test(
+    fn_tree="paddle.fft.irfftn",
+    dtype_x_axis=helpers.dtype_values_axis(
+        available_dtypes=helpers.get_dtypes("valid"),
+        min_value=-10,
+        max_value=10,
+        min_num_dims=1,
+        min_dim_size=2,
+        valid_axis=True,
+        force_int_axis=True,
+    ),
+    n=st.one_of(
+        st.integers(min_value=2, max_value=10),
+        st.just(None),
+    ),
+    axes=st.lists(st.integers(min_value=0, max_value=10), min_size=1, max_size=3),  # This specifies a list of axes
+    norm=st.sampled_from(["backward", "ortho", "forward"]),
+)
+def test_paddle_irfftn(
+    dtype_x_axis,
+    n,
+    axes,
+    norm,
+    frontend,
+    backend_fw,
+    test_flags,
+    fn_tree,
+):
+    input_dtypes, x, _ = dtype_x_axis
+    helpers.test_frontend_function(
+        input_dtypes=input_dtypes,
+        frontend=frontend,
+        backend_to_test=backend_fw,
+        test_flags=test_flags,
+        fn_tree=fn_tree,
+        x=x[0],
+        n=n,
+        axes=axes,
+        norm=norm,
+    )
