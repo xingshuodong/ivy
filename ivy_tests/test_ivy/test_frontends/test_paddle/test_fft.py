@@ -237,9 +237,7 @@ def test_paddle_irfft(
         st.integers(min_value=2, max_value=10),
         st.just(None),
     ),
-    axes=st.lists(
-        st.integers(min_value=0, max_value=10), min_size=1, max_size=3
-    ),
+    axes=st.lists(st.integers(min_value=0, max_value=10), min_size=1, max_size=3),
     norm=st.sampled_from(["backward", "ortho", "forward"]),
 )
 def test_paddle_irfftn(
