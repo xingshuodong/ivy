@@ -129,24 +129,20 @@ def irfft(x, n=None, axis=-1.0, norm="backward", name=None):
     "paddle",
 )
 @to_ivy_arrays_and_back
-def irfftn(x, n=None, axes=None, norm="backward", name=None):
-    shape = x.shape
-    ndim = len(shape)
-    if n is None:
-        n = [2 * (dim - 1) for dim in shape]
+def irfftn(x, s=None, axes=None, norm="backward", name=None):
+    if s is None:
+        n = x.shape[-1] * 2 - 2
     else:
-        n = list(n)
-    if axes is None:
-        axes = list(range(ndim))
-    else:
-        axes = list(axes)
+        n = s[-1] * 2 - 2
 
-    pos_freq_terms = ivy.take_along_axis(x, range(n[axes[0]] // 2 + 1), axis=axes[0])
-    neg_freq_terms = ivy.conj(pos_freq_terms[1:-1][::-1])
-    combined_freq_terms = ivy.concat((pos_freq_terms, neg_freq_terms), axis=axes[0])
-    time_domain_complex = ivy.ifft(combined_freq_terms, axes=axes, norm=norm)
-    if ivy.isreal(x):
-        time_domain = ivy.real(time_domain_complex)
+    pos_freq_terms = ivy.take_along_axis(x, range(n // 2 + 1), axis=axes)
+    if s is not None and s[-1] % 2 == 0:
+        neg_freq_terms = ivy.conj(pos_freq_terms[1:-1][::-1])
     else:
-        time_domain = time_domain_complex
+        neg_freq_terms = ivy.conj(pos_freq_terms[1:][::-1])
+    combined_freq_terms = ivy.concat((pos_freq_terms, neg_freq_terms), axis=axes)
+    time_domain = ivy.ifft(combined_freq_terms, axes, norm=norm, n=n)
+    if ivy.isreal(x):
+        time_domain = ivy.real(time_domain)
+
     return time_domain
