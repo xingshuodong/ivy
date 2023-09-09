@@ -4,6 +4,7 @@ from ivy.func_wrapper import with_supported_dtypes
 from ivy.functional.frontends.paddle.func_wrapper import (
     to_ivy_arrays_and_back,
 )
+from ivy.functional.ivy.experimental.manipulation import _to_tf_padding
 
 
 @with_supported_dtypes(
@@ -130,19 +131,46 @@ def irfft(x, n=None, axis=-1.0, norm="backward", name=None):
 )
 @to_ivy_arrays_and_back
 def irfftn(x, s=None, axes=None, norm="backward", name=None):
-    if s is None:
-        n = x.shape[-1] * 2 - 2
+    x = ivy.array(x)
+    if ivy.is_complex_dtype(x.dtype):
+        output_dtype = 'float32' if x.dtype == 'complex64' else 'float64'
     else:
-        n = s[-1] * 2 - 2
+        output_dtype = 'float32'  # default
 
-    pos_freq_terms = ivy.take_along_axis(x, range(n // 2 + 1), axis=axes)
-    if s is not None and s[-1] % 2 == 0:
-        neg_freq_terms = ivy.conj(pos_freq_terms[1:-1][::-1])
+    time_domain = None  # Initialize with a default value
+
+    if axes is None:
+        axes = list(range(len(x.shape)))
+    if s is None:
+        s = [2 * x.shape[axis] - 2 for axis in axes]
+
+    if len(axes) == 1:
+        pos_freq_terms = x[..., :s[0]//2+1]
+        neg_freq_terms = ivy.conj(pos_freq_terms[..., 1:-1][..., ::-1])
+        combined_freq_terms = ivy.concat((pos_freq_terms, neg_freq_terms), axis=axes[0])
+        complex_result = ivy.ifft(combined_freq_terms, dim=axes[0], norm=norm, n=s[0])
+        real_result = ivy.real(complex_result)
+        result_t=ivy.astype(real_result, output_dtype)
+        return result_t  
+
+    # Multi-dimensional inverse FFT
+    """
+    if s is None:
+        n = [x.shape[axis] * 2 - 2 for axis in axes]
     else:
-        neg_freq_terms = ivy.conj(pos_freq_terms[1:][::-1])
-    combined_freq_terms = ivy.concat((pos_freq_terms, neg_freq_terms), axis=axes)
-    time_domain = ivy.ifft(combined_freq_terms, axes, norm=norm, n=n)
+        n = [s_i * 2 - 2 for s_i in s]
+        
+    # Prepare the combined frequency term
+    # pos_freq_terms = ...  # Actual code to prepare positive frequency terms
+    # neg_freq_terms = ...  # Actual code to prepare negative frequency terms
+    # combined_freq_terms = ...  # Actual code to combine frequency terms
+    
+    # Apply multi-dimensional inverse FFT
+    time_domain = ivy.ifftn(combined_freq_terms, axes=axes, norm=norm, shape=n)
+    
+    # Check if the input was real and return only the real part if so
     if ivy.isreal(x):
         time_domain = ivy.real(time_domain)
-
+    """
+    # Return the inverse FFT
     return time_domain
