@@ -234,7 +234,7 @@ def test_paddle_irfft(
         valid_axis=True,
         force_int_axis=True,
     ),
-    norm=st.sampled_from(["backward"]),
+    norm=st.sampled_from(["backward", "ortho", "forward"]),
 )
 def test_paddle_irfftn(
     dtype_x_axis,
@@ -253,7 +253,7 @@ def test_paddle_irfftn(
         fn_tree=fn_tree,
         x=x[0],
         s=None,
-        axes=[-1],
+        axes=None,
         norm=norm,
     )
 
